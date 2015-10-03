@@ -21,9 +21,9 @@ gpgCommand = ({args, options, stdout, stderr, exit, data}={}) ->
   args.push 'always'
 
   command = atom.config.get 'atom-gpg.gpgExecutable'
-  command ?= 'gpg'
+  if not command
+    command = 'gpg'
 
-  # console.log 'gpg ' + args.join(' ')
   bp = new BufferedProcess
     command: command
     args: args
@@ -50,6 +50,8 @@ gpgCommand = ({args, options, stdout, stderr, exit, data}={}) ->
 gpgEncrypt = (text, index, callback, exit_cb) ->
   stdout = (data) ->
     callback index, data
+  real_exit_cb = (code) ->
+    exit_cb code, 'encrypt'
 
   args = []
   gpgHomeDir = atom.config.get 'atom-gpg.gpgHomeDir'
@@ -85,11 +87,13 @@ gpgEncrypt = (text, index, callback, exit_cb) ->
     args: args
     stdout: stdout
     data: text
-    exit: exit_cb
+    exit: real_exit_cb
 
 gpgDecrypt = (text, index, callback, exit_cb) ->
   stdout = (data) ->
     callback index, data
+  real_exit_cb = (code) ->
+    exit_cb code, 'decrypt'
 
   args = []
   gpgHomeDir = atom.config.get 'atom-gpg.gpgHomeDir'
@@ -103,7 +107,7 @@ gpgDecrypt = (text, index, callback, exit_cb) ->
     args: args
     stdout: stdout
     data: text
-    exit: exit_cb
+    exit: real_exit_cb
 
 module.exports.encrypt = gpgEncrypt
 module.exports.decrypt = gpgDecrypt
